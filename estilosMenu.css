@@ -1,0 +1,93 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    color: white;
+    background-image: url('Img/FondoSuper.jpg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.opciones {
+    text-align: center;
+    padding: 50px 8%;
+    max-width: 900px;
+    margin: auto;
+}
+
+.opciones h3 {
+    margin-bottom: 35px;
+    font-size: 28px;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.opciones-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.opciones-grid a {
+    padding: 22px 15px;
+    color: #ffffff;
+    text-decoration: none;
+    background: rgba(76, 99, 175, 0.65);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.opciones-grid a:hover {
+    background: rgba(0, 170, 237, 0.8);
+    border-color: #00d2ff;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 170, 237, 0.5);
+}
+
+.btn-volver {
+    color: #eaeff0;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: bold;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    transition: color 0.2s;
+}
+
+.btn-volver:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+/* FOOTER */
+footer {
+    text-align: center;
+    padding: 20px;
+    color: #d0c8d9;
+    font-size: 11px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* RESPONSIVE */
+@media (max-width: 700px) {
+    .inicio h2 {
+        font-size: 45px;
+    }
+    .opciones-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}

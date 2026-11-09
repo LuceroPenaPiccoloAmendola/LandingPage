@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sucursales - SuperMarket</title>
+    <link rel="stylesheet" href="estilosVistas.css">
+    <!-- Librería cliente de Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .panel-filtro-dinamico {
+            background: rgba(15, 15, 35, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .panel-filtro-dinamico label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #00d2ff;
+        }
+
+        .control-input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 210, 255, 0.4);
+            color: #fff;
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .control-input:focus {
+            border-color: #00d2ff;
+            box-shadow: 0 0 8px rgba(0, 210, 255, 0.5);
+        }
+
+        select.control-input option {
+            background: #0f0f23;
+            color: #fff;
+        }
+
+        .btn-ejecutar {
+            background: linear-gradient(90deg, #3700ff, #00aaed);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .btn-ejecutar:hover {
+            opacity: 0.9;
+            transform: scale(1.03);
+        }
+
+        .btn-reset {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .btn-reset:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header-modulo">
+        <h2>🏢 Sucursales y Empleados</h2>
+        <a href="menu.html">← Menú Principal</a>
+    </header>
+
+    <main class="contenedor-principal">
+        
+        <!-- PANEL DE FILTROS DINÁMICOS -->
+        <div class="panel-filtro-dinamico">
+            <label for="campoColumna">Filtrar por:</label>
+            <select id="campoColumna" class="control-input">
+                <option value="id_empleado">ID Empleado</option>
+                <option value="nombre">Nombre</option>
+                <option value="puesto">Puesto</option>
+                <option value="id_sucursal">ID Sucursal</option>
+            </select>
+
+            <label for="campoOperador">Condición:</label>
+            <select id="campoOperador" class="control-input">
+                <option value="eq">Igual a (=)</option>
+                <option value="ilike">Contiene (Texto)</option>
+                <option value="neq">Diferente de (≠)</option>
+            </select>
+
+            <input type="text" id="valorBusqueda" class="control-input" placeholder="Ingresa un valor..." />
+
+            <button class="btn-ejecutar" onclick="ejecutarConsultaDinamica()">🔍 Consultar</button>
+            <button class="btn-reset" onclick="mostrarTodo()">Mostrar Todo</button>
+        </div>
+
+        <div class="tabla-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID Empleado</th>
+                        <th>Nombre</th>
+                        <th>Puesto</th>
+                        <th>Sucursal Asignada</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Los datos dinámicos se cargarán aquí -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer>
+        <p>SuperMarket · Sistema de Gestión</p>
+    </footer>
+
+    <script>
+        // 1. Inicializar Supabase con tu clave heredada (Anon/Legacy key)
+        const SUPABASE_URL = 'https://sppydfpfikqvxaviwfem.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwcHlkZnBmaWtxdnhhdml3ZmVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5MTg0NTcsImV4cCI6MjEwOTQ5NDQ1N30.g17KVS9WLU4uew9uhEh0HqP5Ul-ZwTrgljYXHbBysrA'; // Recuerda colocar tu llave eyJ...
+        
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 2. Función de consulta dinámica para sucursales/empleados
+        async function ejecutarConsultaDinamica() {
+            const columna = document.getElementById('campoColumna').value;
+            const operador = document.getElementById('campoOperador').value;
+            const valor = document.getElementById('valorBusqueda').value.trim();
+
+            if (valor === '') {
+                alert('Por favor ingresa un valor para realizar la consulta.');
+                return;
+            }
+
+            try {
+                // Apuntamos al esquema 'dw' y a la tabla correspondiente (cambia 'dim_empleado' si tu tabla se llama distinto)
+                let query = _supabase.schema('dw').from('dim_empleado').select('*');
+
+                if (operador === 'eq') {
+                    query = query.eq(columna, valor);
+                } else if (operador === 'ilike') {
+                    query = query.ilike(columna, `%${valor}%`); // Búsqueda flexible de texto
+                } else if (operador === 'neq') {
+                    query = query.neq(columna, valor);
+                }
+
+                const { data, error } = await query;
+
+                if (error) {
+                    console.error('Error al ejecutar la consulta:', error);
+                    return;
+                }
+
+                renderizarTabla(data);
+
+            } catch (error) {
+                console.error('Error de conexión:', error);
+            }
+        }
+
+        // 3. Cargar todos los registros sin filtros
+        async function mostrarTodo() {
+            document.getElementById('valorBusqueda').value = '';
+            try {
+                const { data, error } = await _supabase
+                    .schema('dw')
+                    .from('dim_empleado') // Cambia el nombre si tu tabla de empleados/sucursales se llama diferente
+                    .select('*');
+
+                if (error) {
+                    console.error('Error al traer datos:', error);
+                    return;
+                }
+
+                renderizarTabla(data);
+
+            } catch (error) {
+                console.error('Error de conexión:', error);
+            }
+        }
+
+        // 4. Pintar los resultados en el HTML
+        function renderizarTabla(data) {
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: #ffcc00;">No se encontraron registros en esta sección.</td></tr>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const fila = `
+                    <tr>
+                        <td>#EMP-${item.id_empleado ?? item.id ?? '00'}</td>
+                        <td>${item.nombre ?? item.nombre_empleado ?? 'N/A'}</td>
+                        <td>${item.puesto ?? 'N/A'}</td>
+                        <td>${item.sucursal ?? item.id_sucursal ?? 'N/A'}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += fila;
+            });
+        }
+
+        // Cargar todo al iniciar la página
+        mostrarTodo();
+    </script>
+</body>
+</html>
