@@ -1,0 +1,87 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    color: white;
+    background-image: url('Img/FondoSuper.jpg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* INICIO */
+.inicio {
+    min-height: 75vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 50px 20px;
+}
+
+.subtitulo {
+    color: #00d2ff;
+    font-size: 13px;
+    letter-spacing: 4px;
+    margin-bottom: 15px;
+    font-weight: bold;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.inicio h2 {
+    font-size: 70px;
+    letter-spacing: -2px;
+    margin-bottom: 20px;
+    color: #ffffff;
+    text-shadow: 0 3px 6px rgba(0, 0, 0, 0.6);
+}
+
+.descripcion {
+    color: #e0e0e0;
+    max-width: 500px;
+    margin-bottom: 30px;
+    font-size: 15px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+button {
+    border: none;
+    color: white;
+    background: linear-gradient(
+        90deg,
+        #3700ff,
+        #00aaed
+    );
+    padding: 14px 28px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(0, 170, 237, 0.4);
+    transition: transform 0.2s ease;
+}
+
+button:hover {
+    opacity: 0.9;
+    transform: scale(1.05);
+}
+
+/* FOOTER */
+footer {
+    text-align: center;
+    padding: 20px;
+    color: #d0c8d9;
+    font-size: 11px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
