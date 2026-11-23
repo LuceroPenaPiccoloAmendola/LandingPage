@@ -3,32 +3,326 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menú - SuperMarket</title>
-    <link rel="stylesheet" href="estilosMenu.css">  
+    <title>Analytics & Tendencias - SuperMarket</title>
+    <link rel="stylesheet" href="estilosVistas.css">
+    <!-- Librería cliente de Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Librería Chart.js para las gráficas interactivas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 35px;
+        }
+
+        .kpi-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .kpi-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f8fafc;
+            letter-spacing: -0.5px;
+        }
+
+        .modulos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .modulo-btn {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 16px;
+            border-radius: 12px;
+            color: #f8fafc;
+            font-weight: 600;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modulo-btn:hover, .modulo-btn.active {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #38bdf8;
+            color: #38bdf8;
+            transform: translateY(-2px);
+        }
+
+        .seccion-titulo {
+            font-size: 18px;
+            font-weight: 600;
+            color: #f8fafc;
+            margin-bottom: 15px;
+        }
+
+        .grafica-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            margin-bottom: 40px;
+        }
+
+        .grafica-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .grafica-contenedor-canvas {
+            position: relative;
+            height: 320px;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
 
-    <main>
-        <section class="opciones">
-            <h3>¿Qué deseas administrar?</h3>
+    <div class="layout-app">
+        
+        <!-- SIDEBAR DE NAVEGACIÓN -->
+        <aside class="sidebar-navegacion">
+            <div>
+                <div class="brand-header">
+                    <div class="brand-logo">SM</div>
+                    <span class="brand-title">SuperMarket</span>
+                </div>
+                
+                <ul class="nav-lista">
+                    <li class="nav-item active"><a href="menu.html">📊 Analytics & Tendencias</a></li>
+                    <li class="nav-item"><a href="ventas.html">💰 Ventas</a></li>
+                    <li class="nav-item"><a href="productos.html">🏷️ Productos</a></li>
+                    <li class="nav-item"><a href="inventario.html">📦 Inventario</a></li>
+                    <li class="nav-item"><a href="clientes.html">👥 Clientes</a></li>
+                    <li class="nav-item"><a href="sucursales.html">🏢 Sucursales</a></li>
+                </ul>
+            </div>
+            
+            <div style="font-size: 11px; color: #475569; text-align: center;">
+                <a href="index.html" style="color: #94a3b8; text-decoration: none;">← Cerrar Sesión</a>
+            </div>
+        </aside>
 
-            <div class="opciones-grid">                
-                <a href="productos.html">🏷️ Productos y Proveedores</a>
-                <a href="inventario.html">📦 Inventario y Stock</a>
-                <a href="ventas.html">💰 Historial de Ventas</a>
-                <a href="clientes.html">👥 Clientes</a>
-                <a href="sucursales.html">🏢 Sucursales y Empleados</a>
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="contenido-app">
+            
+            <div class="top-bar">
+                <div class="page-title">
+                    <h1>Centro de Analítica y Tendencias</h1>
+                    <p>Análisis interactivo del rendimiento comercial en tiempo real desde el Data Warehouse</p>
+                </div>
             </div>
 
-            <div style="margin-top: 35px;">
-                <a href="index.html" class="btn-volver">← Volver al inicio</a>
+            <!-- TARJETAS DE KPIs -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-title">Ventas Totales Registradas</div>
+                    <div class="kpi-value" id="kpi-ventas">Cargando...</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Transacciones Totales</div>
+                    <div class="kpi-value" id="kpi-transacciones">Cargando...</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Ticket Promedio</div>
+                    <div class="kpi-value" id="kpi-promedio">Cargando...</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Volumen de Artículos</div>
+                    <div class="kpi-value" id="kpi-articulos">Cargando...</div>
+                </div>
             </div>
-        </section>
-    </main>
 
-    <footer>
-        <p>SuperMarket · Sistema de Gestión</p>
-    </footer>
+            <!-- BOTONES SELECTORES DE MÓDULOS -->
+            <div>
+                <h3 class="seccion-titulo">Selecciona un Módulo para Analizar su Gestión</h3>
+                <div class="modulos-grid">
+                    <button class="modulo-btn active" onclick="cambiarVistaAnalitica('ventas', this)" id="btn-ventas">💰 Ventas</button>
+                    <button class="modulo-btn" onclick="cambiarVistaAnalitica('inventario', this)" id="btn-inventario">📦 Inventario</button>
+                    <button class="modulo-btn" onclick="cambiarVistaAnalitica('productos', this)" id="btn-productos">🏷️ Productos</button>
+                    <button class="modulo-btn" onclick="cambiarVistaAnalitica('sucursales', this)" id="btn-sucursales">🏢 Sucursales</button>
+                </div>
+            </div>
 
+            <!-- SECCIÓN DE GRÁFICA DINÁMICA -->
+            <div class="grafica-card">
+                <div class="grafica-header">
+                    <h3 class="seccion-titulo" id="tituloGrafica" style="margin: 0;">Análisis de Ventas por Monto</h3>
+                    <span style="font-size: 12px; color: #94a3b8;" id="subtituloGrafica">Mostrando transacciones del esquema dw</span>
+                </div>
+                <div class="grafica-contenedor-canvas">
+                    <canvas id="graficaDinamica"></canvas>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://sppydfpfikqvxaviwfem.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwcHlkZnBmaWtxdnhhdml3ZmVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5MTg0NTcsImV4cCI6MjEwOTQ5NDQ1N30.g17KVS9WLU4uew9uhEh0HqP5Ul-ZwTrgljYXHbBysrA';
+        
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let miGrafica = null;
+
+        async function inicializarMenu() {
+            await cargarEstadisticasReales();
+            await cambiarVistaAnalitica('ventas', document.getElementById('btn-ventas'));
+        }
+
+        async function cargarEstadisticasReales() {
+            try {
+                const { data, error } = await _supabase.schema('dw').from('fact_ventas').select('monto_total, cantidad_vendida');
+                if (error) {
+                    console.error('Error KPIs:', error);
+                    return;
+                }
+
+                let ventasTotales = 0, articulosTotales = 0, transaccionesTotales = data ? data.length : 0;
+                if (data) {
+                    data.forEach(item => {
+                        ventasTotales += Number(item.monto_total || 0);
+                        articulosTotales += Number(item.cantidad_vendida || 0);
+                    });
+                }
+                let ticketPromedio = transaccionesTotales > 0 ? ventasTotales / transaccionesTotales : 0;
+
+                document.getElementById('kpi-ventas').innerText = `$${ventasTotales.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+                document.getElementById('kpi-transacciones').innerText = transaccionesTotales.toLocaleString();
+                document.getElementById('kpi-promedio').innerText = `$${ticketPromedio.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+                document.getElementById('kpi-articulos').innerText = articulosTotales.toLocaleString();
+            } catch (err) { console.error(err); }
+        }
+
+        async function cambiarVistaAnalitica(modulo, botonElem) {
+            document.querySelectorAll('.modulo-btn').forEach(b => b.classList.remove('active'));
+            if(botonElem) botonElem.classList.add('active');
+
+            let labels = [];
+            let valores = [];
+            let labelDataset = '';
+            let colorGrafica = '#38bdf8';
+
+            try {
+                if (modulo === 'ventas') {
+                    document.getElementById('tituloGrafica').innerText = 'Comportamiento de Ventas (Monto por Transacción)';
+                    document.getElementById('subtituloGrafica').innerText = 'Muestra los montos registrados en fact_ventas';
+                    
+                    const { data } = await _supabase.schema('dw').from('fact_ventas').select('id_venta, monto_total').limit(15);
+                    if (data) {
+                        labels = data.map(d => `#VTA-${d.id_venta}`);
+                        valores = data.map(d => d.monto_total);
+                    }
+                    labelDataset = 'Monto ($)';
+                    colorGrafica = '#34d399';
+
+                } else if (modulo === 'inventario') {
+                    document.getElementById('tituloGrafica').innerText = 'Gestión de Stock Actual por Producto';
+                    document.getElementById('subtituloGrafica').innerText = 'Monitoreo de existencias extraído de fact_inventario';
+                    
+                    const { data } = await _supabase.schema('dw').from('fact_inventario').select('id_producto, stock_actual').limit(15);
+                    if (data) {
+                        labels = data.map(d => `Prod #${d.id_producto}`);
+                        valores = data.map(d => d.stock_actual);
+                    }
+                    labelDataset = 'Stock Actual';
+                    colorGrafica = '#f59e0b';
+
+                } else if (modulo === 'productos') {
+                    document.getElementById('tituloGrafica').innerText = 'Catálogo: Precios Unitarios por Producto';
+                    document.getElementById('subtituloGrafica').innerText = 'Análisis de costos de dim_producto';
+                    
+                    const { data } = await _supabase.schema('dw').from('dim_producto').select('nombre_producto, precio_unitario').limit(15);
+                    if (data) {
+                        labels = data.map(d => d.nombre_producto ?? 'Producto');
+                        valores = data.map(d => d.precio_unitario);
+                    }
+                    labelDataset = 'Precio Unitario ($)';
+                    colorGrafica = '#3b82f6';
+
+                } else if (modulo === 'sucursales') {
+                    document.getElementById('tituloGrafica').innerText = 'Distribución de Personal por Sucursal';
+                    document.getElementById('subtituloGrafica').innerText = 'Cantidad de empleados registrados en dim_empleado';
+                    
+                    const { data } = await _supabase.schema('dw').from('dim_empleado').select('id_sucursal, id_empleado').limit(15);
+                    if (data) {
+                        labels = data.map(d => `Emp #${d.id_empleado}`);
+                        valores = data.map(d => d.id_sucursal);
+                    }
+                    labelDataset = 'ID Sucursal Asignada';
+                    colorGrafica = '#c084fc';
+                }
+
+                renderizarGrafica(labels, valores, labelDataset, colorGrafica);
+            } catch (err) {
+                console.error('Error al cambiar vista analítica:', err);
+            }
+        }
+
+        function renderizarGrafica(labels, valores, labelDataset, color) {
+            const ctx = document.getElementById('graficaDinamica').getContext('2d');
+            
+            if (miGrafica) {
+                miGrafica.destroy();
+            }
+
+            miGrafica = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: labelDataset,
+                        data: valores,
+                        backgroundColor: color,
+                        borderColor: color,
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#cbd5e1' } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                    }
+                }
+            });
+        }
+
+        inicializarMenu();
+    </script>
 </body>
 </html>

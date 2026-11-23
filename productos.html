@@ -5,229 +5,128 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Productos - SuperMarket</title>
     <link rel="stylesheet" href="estilosVistas.css">
-    <!-- Librería cliente de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .panel-filtro-dinamico {
-            background: rgba(15, 15, 35, 0.7);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .panel-filtro-dinamico label {
-            font-size: 13px;
-            font-weight: bold;
-            color: #00d2ff;
-        }
-
-        .control-input {
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(0, 210, 255, 0.4);
-            color: #fff;
-            padding: 9px 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .control-input:focus {
-            border-color: #00d2ff;
-            box-shadow: 0 0 8px rgba(0, 210, 255, 0.5);
-        }
-
-        select.control-input option {
-            background: #0f0f23;
-            color: #fff;
-        }
-
-        .btn-ejecutar {
-            background: linear-gradient(90deg, #3700ff, #00aaed);
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: bold;
-            transition: transform 0.2s, opacity 0.2s;
-        }
-
-        .btn-ejecutar:hover {
-            opacity: 0.9;
-            transform: scale(1.03);
-        }
-
-        .btn-reset {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 10px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: background 0.2s;
-        }
-
-        .btn-reset:hover {
-            background: rgba(255, 255, 255, 0.25);
-        }
+        .badge-precio { color: #34d399; font-weight: 600; }
     </style>
 </head>
 <body>
-
-    <header class="header-modulo">
-        <h2>🏷️ Catálogo de Productos y Proveedores</h2>
-        <a href="menu.html">← Menú Principal</a>
-    </header>
-
-    <main class="contenedor-principal">
-        
-        <!-- PANEL DE FILTROS DINÁMICOS -->
-        <div class="panel-filtro-dinamico">
-            <label for="campoColumna">Filtrar por:</label>
-            <select id="campoColumna" class="control-input">
-                <option value="id_producto">ID / SKU</option>
-                <option value="nombre_producto">Nombre del Producto</option>
-                <option value="categoria">Categoría</option>
-            </select>
-
-            <label for="campoOperador">Condición:</label>
-            <select id="campoOperador" class="control-input">
-                <option value="eq">Igual a (=)</option>
-                <option value="ilike">Contiene (Texto)</option>
-                <option value="neq">Diferente de (≠)</option>
-            </select>
-
-            <input type="text" id="valorBusqueda" class="control-input" placeholder="Ingresa valor de búsqueda..." />
-
-            <button class="btn-ejecutar" onclick="ejecutarConsultaDinamica()">🔍 Consultar</button>
-            <button class="btn-reset" onclick="mostrarTodo()">Mostrar Todo</button>
-        </div>
-
-        <div class="tabla-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>SKU</th>
-                        <th>Producto</th>
-                        <th>Categoría</th>
-                        <th>Precio Unitario</th>
-                        <th>Proveedor</th>
-                        <th>Contacto Proveedor</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Los datos dinámicos se cargarán aquí -->
-                </tbody>
-            </table>
-        </div>
-    </main>
-
-    <footer>
-        <p>SuperMarket · Sistema de Gestión</p>
-    </footer>
-
+    <div class="layout-app">
+        <aside class="sidebar-navegacion">
+            <div>
+                <div class="brand-header"><div class="brand-logo">SM</div><span class="brand-title">SuperMarket</span></div>
+                <ul class="nav-lista">
+                    <li class="nav-item"><a href="menu.html">📊 Analytics & Tendencias</a></li>
+                    <li class="nav-item"><a href="ventas.html">💰 Ventas</a></li>
+                    <li class="nav-item active"><a href="productos.html">🏷️ Productos</a></li>
+                    <li class="nav-item"><a href="inventario.html">📦 Inventario</a></li>
+                    <li class="nav-item"><a href="clientes.html">👥 Clientes</a></li>
+                    <li class="nav-item"><a href="sucursales.html">🏢 Sucursales</a></li>
+                </ul>
+            </div>
+            <div style="font-size: 11px; color: #475569; text-align: center;"><a href="index.html" style="color: #94a3b8; text-decoration: none;">← Cerrar Sesión</a></div>
+        </aside>
+        <main class="contenido-app">
+            <div class="top-bar">
+                <div class="page-title"><h1>Catálogo de Productos</h1><p>Gestión paginada de productos y proveedores</p></div>
+            </div>
+            <div class="toolbar-filtros">
+                <div class="filtros-grupo">
+                    <select id="campoColumna" class="input-select">
+                        <option value="id_producto">ID / SKU</option>
+                        <option value="nombre_producto">Nombre del Producto</option>
+                        <option value="categoria">Categoría</option>
+                    </select>
+                    <select id="campoOperador" class="input-select">
+                        <option value="eq">Igual a (=)</option>
+                        <option value="ilike">Contiene (Texto)</option>
+                    </select>
+                    <input type="text" id="valorBusqueda" class="input-text" placeholder="Ingresa valor..." />
+                </div>
+                <div class="filtros-grupo">
+                    <button class="btn-primary" onclick="aplicarFiltro()">🔍 Consultar</button>
+                    <button class="btn-secondary" onclick="resetearTodo()">Mostrar Todo</button>
+                </div>
+            </div>
+            <div class="tabla-card">
+                <table class="tabla-custom">
+                    <thead>
+                        <tr><th>SKU / ID</th><th>Producto</th><th>Categoría</th><th>Precio Unitario</th><th>Proveedor ID</th></tr>
+                    </thead>
+                    <tbody id="tablaCuerpo"></tbody>
+                </table>
+                <div class="paginacion-container">
+                    <div class="paginacion-info" id="infoPaginacion">Mostrando registros...</div>
+                    <div class="paginacion-botones">
+                        <button class="btn-pagina" id="btnAnterior" onclick="cambiarPagina(-1)" disabled>← Anterior</button>
+                        <button class="btn-pagina" id="btnSiguiente" onclick="cambiarPagina(1)">Siguiente →</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
     <script>
-        // 1. Inicializar Supabase con tu credencial heredada (Anon/Legacy key)
         const SUPABASE_URL = 'https://sppydfpfikqvxaviwfem.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwcHlkZnBmaWtxdnhhdml3ZmVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5MTg0NTcsImV4cCI6MjEwOTQ5NDQ1N30.g17KVS9WLU4uew9uhEh0HqP5Ul-ZwTrgljYXHbBysrA'; // Recuerda colocar tu llave eyJ...
-        
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwcHlkZnBmaWtxdnhhdml3ZmVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5MTg0NTcsImV4cCI6MjEwOTQ5NDQ1N30.g17KVS9WLU4uew9uhEh0HqP5Ul-ZwTrgljYXHbBysrA';
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // 2. Función de consulta dinámica adaptada para productos
-        async function ejecutarConsultaDinamica() {
-            const columna = document.getElementById('campoColumna').value;
-            const operador = document.getElementById('campoOperador').value;
-            const valor = document.getElementById('valorBusqueda').value.trim();
+        let paginaActual = 0;
+        const registrosPorPagina = 10;
+        let modoFiltrado = false;
 
-            if (valor === '') {
-                alert('Por favor ingresa un valor para realizar la consulta.');
-                return;
+        async function cargarDatos(saltoPagina = 0) {
+            paginaActual += saltoPagina;
+            if (paginaActual < 0) paginaActual = 0;
+            const desde = paginaActual * registrosPorPagina;
+            const hasta = desde + registrosPorPagina - 1;
+
+            let query = _supabase.schema('dw').from('dim_producto').select('*', { count: 'exact' });
+
+            if (modoFiltrado) {
+                const columna = document.getElementById('campoColumna').value;
+                const operador = document.getElementById('campoOperador').value;
+                const valor = document.getElementById('valorBusqueda').value.trim();
+                if (operador === 'eq') query = query.eq(columna, valor);
+                else if (operador === 'ilike') query = query.ilike(columna, `%${valor}%`);
             }
 
-            try {
-                // Apuntamos al esquema 'dw' y a la tabla de productos (cambia 'dim_producto' si tu tabla se llama distinto)
-                let query = _supabase.schema('dw').from('dim_producto').select('*');
-
-                if (operador === 'eq') {
-                    query = query.eq(columna, valor);
-                } else if (operador === 'ilike') {
-                    query = query.ilike(columna, `%${valor}%`); // Búsqueda flexible de texto parcial
-                } else if (operador === 'neq') {
-                    query = query.neq(columna, valor);
-                }
-
-                const { data, error } = await query;
-
-                if (error) {
-                    console.error('Error al ejecutar la consulta:', error);
-                    return;
-                }
-
-                renderizarTabla(data);
-
-            } catch (error) {
-                console.error('Error de conexión:', error);
-            }
+            const { data, error, count } = await query.range(desde, hasta);
+            if (error) { console.error(error); return; }
+            renderizarTabla(data, count, desde, hasta);
         }
 
-        // 3. Cargar todos los registros de productos sin filtros
-        async function mostrarTodo() {
-            document.getElementById('valorBusqueda').value = '';
-            try {
-                const { data, error } = await _supabase
-                    .schema('dw')
-                    .from('dim_producto') // Cambia el nombre de la tabla si es necesario
-                    .select('*');
-
-                if (error) {
-                    console.error('Error al traer datos:', error);
-                    return;
-                }
-
-                renderizarTabla(data);
-
-            } catch (error) {
-                console.error('Error de conexión:', error);
-            }
+        function aplicarFiltro() {
+            if (document.getElementById('valorBusqueda').value.trim() === '') { alert('Ingresa un valor'); return; }
+            modoFiltrado = true; paginaActual = 0; cargarDatos(0);
         }
+        function resetearTodo() { document.getElementById('valorBusqueda').value = ''; modoFiltrado = false; paginaActual = 0; cargarDatos(0); }
+        function cambiarPagina(dir) { cargarDatos(dir); }
 
-        // 4. Pintar los resultados en el HTML
-        function renderizarTabla(data) {
-            const tbody = document.querySelector('tbody');
+        function renderizarTabla(data, totalRegistros, desde, hasta) {
+            const tbody = document.getElementById('tablaCuerpo');
             tbody.innerHTML = '';
-
             if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: #ffcc00;">No se encontraron productos registrados.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: #f59e0b;">No se encontraron productos.</td></tr>`;
+                document.getElementById('infoPaginacion').textContent = 'Mostrando 0 de 0';
+                document.getElementById('btnAnterior').disabled = true; document.getElementById('btnSiguiente').disabled = true;
                 return;
             }
-
             data.forEach(item => {
-                const fila = `
-                    <tr>
-                        <td>${item.id_producto ?? item.sku ?? 'N/A'}</td>
-                        <td>${item.nombre_producto ?? 'N/A'}</td>
-                        <td>${item.categoria ?? 'N/A'}</td>
-                        <td>$${item.precio_unitario ?? '0.00'}</td>
-                        <td>${item.proveedor ?? 'N/A'}</td>
-                        <td>${item.id_proveedor ?? 'N/A'}</td>
-                    </tr>
-                `;
-                tbody.innerHTML += fila;
+                tbody.innerHTML += `<tr>
+                    <td><span class="badge-id">#PRD-${item.id_producto ?? '00'}</span></td>
+                    <td><strong>${item.nombre_producto ?? 'N/A'}</strong></td>
+                    <td>${item.categoria ?? 'N/A'}</td>
+                    <td><span class="badge-precio">$${Number(item.precio_unitario || 0).toFixed(2)}</span></td>
+                    <td>Prov. #${item.id_proveedor ?? 'N/A'}</td>
+                </tr>`;
             });
+            const hastaMostrado = Math.min(hasta + 1, totalRegistros);
+            document.getElementById('infoPaginacion').textContent = `Mostrando ${desde + 1} - ${hastaMostrado} de ${totalRegistros} registros`;
+            document.getElementById('btnAnterior').disabled = paginaActual === 0;
+            document.getElementById('btnSiguiente').disabled = hastaMostrado >= totalRegistros;
         }
-
-        // Cargar todo al iniciar la página
-        mostrarTodo();
+        cargarDatos(0);
     </script>
 </body>
 </html>

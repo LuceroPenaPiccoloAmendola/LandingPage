@@ -5,225 +5,238 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clientes - SuperMarket</title>
     <link rel="stylesheet" href="estilosVistas.css">
-    <!-- Librería cliente de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        .panel-filtro-dinamico {
-            background: rgba(15, 15, 35, 0.7);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .panel-filtro-dinamico label {
-            font-size: 13px;
-            font-weight: bold;
-            color: #00d2ff;
-        }
-
-        .control-input {
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(0, 210, 255, 0.4);
-            color: #fff;
-            padding: 9px 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .control-input:focus {
-            border-color: #00d2ff;
-            box-shadow: 0 0 8px rgba(0, 210, 255, 0.5);
-        }
-
-        select.control-input option {
-            background: #0f0f23;
-            color: #fff;
-        }
-
-        .btn-ejecutar {
-            background: linear-gradient(90deg, #3700ff, #00aaed);
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: bold;
-            transition: transform 0.2s, opacity 0.2s;
-        }
-
-        .btn-ejecutar:hover {
-            opacity: 0.9;
-            transform: scale(1.03);
-        }
-
-        .btn-reset {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 10px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: background 0.2s;
-        }
-
-        .btn-reset:hover {
-            background: rgba(255, 255, 255, 0.25);
-        }
-    </style>
+    <!-- Importamos el script general de CRUD -->
+    <script src="crud.js"></script>
 </head>
 <body>
-
-    <header class="header-modulo">
-        <h2>👥 Directorio de Clientes</h2>
-        <a href="menu.html">← Menú Principal</a>
-    </header>
-
-    <main class="contenedor-principal">
+    <div class="layout-app">
         
-        <!-- PANEL DE FILTROS DINÁMICOS -->
-        <div class="panel-filtro-dinamico">
-            <label for="campoColumna">Filtrar por:</label>
-            <select id="campoColumna" class="control-input">
-                <option value="id_cliente">ID Cliente</option>
-                <option value="nombre">Nombre</option>
-                <option value="correo">Correo Electrónico</option>
-            </select>
+        <!-- SIDEBAR DE NAVEGACIÓN (¡De vuelta en su lugar!) -->
+        <aside class="sidebar-navegacion">
+            <div>
+                <div class="brand-header">
+                    <div class="brand-logo">SM</div>
+                    <span class="brand-title">SuperMarket</span>
+                </div>
+                
+                <ul class="nav-lista">
+                    <li class="nav-item"><a href="menu.html">📊 Analytics & Tendencias</a></li>
+                    <li class="nav-item"><a href="ventas.html">💰 Ventas</a></li>
+                    <li class="nav-item"><a href="productos.html">🏷️ Productos</a></li>
+                    <li class="nav-item"><a href="inventario.html">📦 Inventario</a></li>
+                    <li class="nav-item active"><a href="clientes.html">👥 Clientes</a></li>
+                    <li class="nav-item"><a href="sucursales.html">🏢 Sucursales</a></li>
+                </ul>
+            </div>
+            
+            <div style="font-size: 11px; color: #475569; text-align: center;">
+                <a href="index.html" style="color: #94a3b8; text-decoration: none;">← Cerrar Sesión</a>
+            </div>
+        </aside>
 
-            <label for="campoOperador">Condición:</label>
-            <select id="campoOperador" class="control-input">
-                <option value="eq">Igual a (=)</option>
-                <option value="ilike">Contiene (Texto)</option>
-                <option value="neq">Diferente de (≠)</option>
-            </select>
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="contenido-app">
+            
+            <div class="top-bar">
+                <div class="page-title">
+                    <h1>Directorio de Clientes</h1>
+                    <p>Gestión paginada con funciones centralizadas en crud.js</p>
+                </div>
+            </div>
 
-            <input type="text" id="valorBusqueda" class="control-input" placeholder="Ingresa un valor..." />
+            <!-- TOOLBAR DE FILTROS Y BOTÓN NUEVO -->
+            <div class="toolbar-filtros">
+                <div class="filtros-grupo">
+                    <select id="campoColumna" class="input-select">
+                        <option value="id_cliente">ID Cliente</option>
+                        <option value="nombre">Nombre</option>
+                        <option value="correo">Correo</option>
+                    </select>
+                    <select id="campoOperador" class="input-select">
+                        <option value="eq">Igual a (=)</option>
+                        <option value="ilike">Contiene</option>
+                    </select>
+                    <input type="text" id="valorBusqueda" class="input-text" placeholder="Buscar..." />
+                </div>
 
-            <button class="btn-ejecutar" onclick="ejecutarConsultaDinamica()">🔍 Consultar</button>
-            <button class="btn-reset" onclick="mostrarTodo()">Mostrar Todo</button>
+                <div class="filtros-grupo">
+                    <button class="btn-primary" onclick="aplicarFiltro()">🔍 Consultar</button>
+                    <button class="btn-secondary" onclick="resetearTodo()">Mostrar Todo</button>
+                    <button class="btn-primary" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="abrirModalCRUD()">+ Nuevo Cliente</button>
+                </div>
+            </div>
+
+            <!-- TABLA DE RESULTADOS Y PAGINACIÓN -->
+            <div class="tabla-card">
+                <table class="tabla-custom">
+                    <thead>
+                        <tr>
+                            <th>ID Cliente</th>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Teléfono</th>
+                            <th style="text-align: center;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCuerpo">
+                        <!-- Carga dinámica -->
+                    </tbody>
+                </table>
+
+                <div class="paginacion-container">
+                    <div class="paginacion-info" id="infoPaginacion">Mostrando registros...</div>
+                    <div class="paginacion-botones">
+                        <button class="btn-pagina" id="btnAnterior" onclick="cambiarPagina(-1)" disabled>← Anterior</button>
+                        <button class="btn-pagina" id="btnSiguiente" onclick="cambiarPagina(1)">Siguiente →</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    
+    
+    
+    <!-- MODAL GENERAL PARA CREAR/EDITAR -->
+    <div id="modalForm" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); backdrop-filter:blur(5px); z-index:1000; justify-content:center; align-items:center;">
+        <div style="background:#0f172a; border:1px solid rgba(255,255,255,0.1); padding:30px; border-radius:14px; width:400px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+            <h3 id="modalTitulo" style="margin-bottom:20px; color:#f8fafc;">Registro</h3>
+            <input type="hidden" id="formId" />
+            
+            <div style="margin-bottom:15px;">
+                <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:5px;">Nombre:</label>
+                <input type="text" id="formNombre" class="input-text" style="width:100%;" />
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:5px;">Correo:</label>
+                <input type="email" id="formCorreo" class="input-text" style="width:100%;" />
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:5px;">Teléfono:</label>
+                <input type="text" id="formTelefono" class="input-text" style="width:100%;" />
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn-secondary" onclick="cerrarModalCRUD()">Cancelar</button>
+                <button class="btn-primary" onclick="guardarRegistroCRUD(_supabase, cargarDatos)">Guardar</button>
+            </div>
         </div>
-
-        <div class="tabla-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID Cliente</th>
-                        <th>Nombre</th>
-                        <th>Correo Electrónico</th>
-                        <th>Teléfono</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Los datos dinámicos se cargarán aquí -->
-                </tbody>
-            </table>
-        </div>
-    </main>
-
-    <footer>
-        <p>SuperMarket · Sistema de Gestión</p>
-    </footer>
-
-    <script>
-        // 1. Inicializar Supabase con tu clave heredada (Anon/Legacy key)
+    </div>
+<script>
         const SUPABASE_URL = 'https://sppydfpfikqvxaviwfem.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwcHlkZnBmaWtxdnhhdml3ZmVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5MTg0NTcsImV4cCI6MjEwOTQ5NDQ1N30.g17KVS9WLU4uew9uhEh0HqP5Ul-ZwTrgljYXHbBysrA'; // Recuerda colocar tu llave eyJ...
-        
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwcHlkZnBmaWtxdnhhdml3ZmVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5MTg0NTcsImV4cCI6MjEwOTQ5NDQ1N30.g17KVS9WLU4uew9uhEh0HqP5Ul-ZwTrgljYXHbBysrA ';
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // 2. Función de consulta dinámica para clientes
-        async function ejecutarConsultaDinamica() {
-            const columna = document.getElementById('campoColumna').value;
-            const operador = document.getElementById('campoOperador').value;
+        // CONFIGURAR EL MÓDULO ACTUAL PARA EL CRUD
+        configurarCRUD({
+            tabla: 'dim_cliente',
+            idField: 'id_cliente',
+            nombreModulo: 'Cliente'
+        });
+
+        let paginaActual = 0;
+        const registrosPorPagina = 10;
+        let modoFiltrado = false;
+
+       async function cargarDatos(resetPagina = false) {
+            if (resetPagina) paginaActual = 0;
+            const desde = paginaActual * registrosPorPagina;
+            const hasta = desde + registrosPorPagina - 1;
+
+            try {
+                let query = _supabase.schema('dw').from('dim_cliente').select('*', { count: 'exact' });
+
+                if (modoFiltrado) {
+                    let columna = document.getElementById('campoColumna').value;
+                    const operador = document.getElementById('campoOperador').value.toLowerCase();
+                    const valor = document.getElementById('valorBusqueda').value.trim();
+                    
+                    // Mapeo inteligente de columnas para asegurar el esquema 'dw'
+                    if (columna === 'nombre' || columna === 'nombre_cliente' || columna.includes('nombre')) columna = 'nombre_cliente';
+                    if (columna === 'correo' || columna === 'email' || columna.includes('correo')) columna = 'email';
+                    if (columna === 'id' || columna === 'id_cliente' || columna.includes('id')) columna = 'id_cliente';
+
+                    if (valor !== '') {
+                        // Si es ID o usa operador de igualdad estricta
+                        if (operador === 'eq' || operador === '=' || columna === 'id_cliente') {
+                            query = query.eq(columna, Number(valor) || valor);
+                        } else {
+                            // CUALQUIER otro operador de texto (ilike, like, contiene, etc.) usará búsqueda parcial
+                            query = query.ilike(columna, `%${valor}%`);
+                        }
+                    }
+                }
+
+                const { data, error, count } = await query.range(desde, hasta);
+                if (error) { console.error('Error al consultar:', error); return; }
+                
+                renderizarTabla(data, count, desde, hasta);
+            } catch (err) { console.error('Excepción en carga:', err); }
+        }
+
+        function aplicarFiltro() {
             const valor = document.getElementById('valorBusqueda').value.trim();
-
-            if (valor === '') {
-                alert('Por favor ingresa un valor para realizar la consulta.');
-                return;
-            }
-
-            try {
-                // Apuntamos al esquema 'dw' y a la tabla de clientes (cambia 'dim_cliente' si tu tabla se llama diferente)
-                let query = _supabase.schema('dw').from('dim_cliente').select('*');
-
-                if (operador === 'eq') {
-                    query = query.eq(columna, valor);
-                } else if (operador === 'ilike') {
-                    query = query.ilike(columna, `%${valor}%`); // Búsqueda flexible de texto
-                } else if (operador === 'neq') {
-                    query = query.neq(columna, valor);
-                }
-
-                const { data, error } = await query;
-
-                if (error) {
-                    console.error('Error al ejecutar la consulta:', error);
-                    return;
-                }
-
-                renderizarTabla(data);
-
-            } catch (error) {
-                console.error('Error de conexión:', error);
-            }
+            if (valor === '') { alert('Ingresa un valor para buscar'); return; }
+            modoFiltrado = true; 
+            cargarDatos(true); // Reinicia a la página 0 al filtrar
         }
 
-        // 3. Cargar todos los registros de clientes sin filtros
-        async function mostrarTodo() {
-            document.getElementById('valorBusqueda').value = '';
-            try {
-                const { data, error } = await _supabase
-                    .schema('dw')
-                    .from('dim_cliente') // Cambia el nombre si es necesario
-                    .select('*');
-
-                if (error) {
-                    console.error('Error al traer datos:', error);
-                    return;
-                }
-
-                renderizarTabla(data);
-
-            } catch (error) {
-                console.error('Error de conexión:', error);
-            }
+        function resetearTodo() { 
+            document.getElementById('valorBusqueda').value = ''; 
+            modoFiltrado = false; 
+            cargarDatos(true); 
         }
 
-        // 4. Pintar los resultados en el HTML
-        function renderizarTabla(data) {
-            const tbody = document.querySelector('tbody');
+        // Control para Siguiente (+1) y Anterior (-1)
+        function cambiarPagina(direccion) {
+            paginaActual += direccion;
+            if (paginaActual < 0) paginaActual = 0;
+            cargarDatos(false);
+        }
+
+        function renderizarTabla(data, totalRegistros, desde, hasta) {
+            const tbody = document.getElementById('tablaCuerpo');
             tbody.innerHTML = '';
-
+            
             if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: #ffcc00;">No se encontraron clientes registrados.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: #f59e0b;">No se encontraron registros.</td></tr>`;
+                document.getElementById('infoPaginacion').textContent = 'Mostrando 0 de 0';
+                document.getElementById('btnAnterior').disabled = true; 
+                document.getElementById('btnSiguiente').disabled = true;
                 return;
             }
 
             data.forEach(item => {
-                const fila = `
+                const id = item.id_cliente;
+                const nombre = item.nombre_cliente ?? 'N/A';
+                const email = item.email ?? 'N/A';
+                const tel = item.telefono ?? 'N/A';
+
+                tbody.innerHTML += `
                     <tr>
-                        <td>#CLI-${item.id_cliente ?? item.id ?? '00'}</td>
-                        <td>${item.nombre ?? item.nombre_cliente ?? 'N/A'}</td>
-                        <td>${item.correo ?? item.email ?? 'N/A'}</td>
-                        <td>${item.telefono ?? 'N/A'}</td>
+                        <td><span class="badge-id">#CLI-${id}</span></td>
+                        <td><strong>${nombre}</strong></td>
+                        <td><span class="badge-email">${email}</span></td>
+                        <td>${tel}</td>
+                        <td style="text-align: center;">
+                            <button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick='abrirModalCRUD(${JSON.stringify(item)})'>✏️ Editar</button>
+                            <button class="btn-primary" style="padding: 5px 10px; font-size: 11px; background: #ef4444; box-shadow: none;" onclick="eliminarRegistroCRUD(_supabase, ${id}, () => cargarDatos(false))">🗑️ Borrar</button>
+                        </td>
                     </tr>
                 `;
-                tbody.innerHTML += fila;
             });
+
+            const hastaMostrado = Math.min(hasta + 1, totalRegistros);
+            document.getElementById('infoPaginacion').textContent = `Mostrando ${desde + 1} a ${hastaMostrado} de ${totalRegistros} registros`;
+            document.getElementById('btnAnterior').disabled = paginaActual === 0;
+            document.getElementById('btnSiguiente').disabled = (desde + data.length) >= totalRegistros;
         }
 
-        // Cargar todo al iniciar la página
-        mostrarTodo();
+        // Carga inicial al abrir la página
+        cargarDatos(true);
     </script>
 </body>
 </html>
