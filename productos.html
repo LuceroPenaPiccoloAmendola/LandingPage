@@ -6,6 +6,7 @@
     <title>Productos - SuperMarket</title>
     <link rel="stylesheet" href="estilosVistas.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="CRUD.js"></script>
     <style>
         .badge-precio { color: #34d399; font-weight: 600; }
     </style>
@@ -46,12 +47,20 @@
                 <div class="filtros-grupo">
                     <button class="btn-primary" onclick="aplicarFiltro()">🔍 Consultar</button>
                     <button class="btn-secondary" onclick="resetearTodo()">Mostrar Todo</button>
+                    <button class="btn-primary" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="abrirModalCRUD()">+ Nuevo Producto</button>
                 </div>
             </div>
             <div class="tabla-card">
                 <table class="tabla-custom">
                     <thead>
-                        <tr><th>SKU / ID</th><th>Producto</th><th>Categoría</th><th>Precio Unitario</th><th>Proveedor ID</th></tr>
+                        <tr>
+                            <th>SKU / ID</th>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th>Precio Unitario</th>
+                            <th>Proveedor ID</th>
+                            <th style="text-align: center;">Acciones</th>
+                        </tr>
                     </thead>
                     <tbody id="tablaCuerpo"></tbody>
                 </table>
@@ -65,11 +74,54 @@
             </div>
         </main>
     </div>
+
+    <!-- MODAL GENERAL PARA CREAR/EDITAR PRODUCTO -->
+    <div id="modalForm" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); backdrop-filter:blur(5px); z-index:1000; justify-content:center; align-items:center;">
+        <div style="background:#0f172a; border:1px solid rgba(255,255,255,0.1); padding:30px; border-radius:14px; width:400px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+            <h3 id="modalTitulo" style="margin-bottom:20px; color:#f8fafc;">Registro</h3>
+            <input type="hidden" id="formId" />
+
+            <div style="margin-bottom:15px;">
+                <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:5px;">Nombre del Producto:</label>
+                <input type="text" id="formNombreProducto" class="input-text" style="width:100%;" />
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:5px;">Categoría:</label>
+                <input type="text" id="formCategoria" class="input-text" style="width:100%;" />
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:5px;">Precio Unitario:</label>
+                <input type="number" step="0.01" id="formPrecioUnitario" class="input-text" style="width:100%;" />
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:5px;">Proveedor ID:</label>
+                <input type="number" id="formIdProveedor" class="input-text" style="width:100%;" />
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn-secondary" onclick="cerrarModalCRUD()">Cancelar</button>
+                <button class="btn-primary" onclick="guardarRegistroCRUD(_supabase, () => cargarDatos(0))">Guardar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://sppydfpfikqvxaviwfem.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwcHlkZnBmaWtxdnhhdml3ZmVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5MTg0NTcsImV4cCI6MjEwOTQ5NDQ1N30.g17KVS9WLU4uew9uhEh0HqP5Ul-ZwTrgljYXHbBysrA';
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        configurarCRUD({
+            tabla: 'dim_producto',
+            idField: 'id_producto',
+            nombreModulo: 'Producto',
+            campos: [
+                { inputId: 'formNombreProducto', columna: 'nombre_producto', label: 'Nombre del Producto', tipo: 'texto', requerido: true },
+                { inputId: 'formCategoria', columna: 'categoria', label: 'Categoría', tipo: 'texto', requerido: false },
+                { inputId: 'formPrecioUnitario', columna: 'precio_unitario', label: 'Precio Unitario', tipo: 'numero', requerido: false },
+                { inputId: 'formIdProveedor', columna: 'id_proveedor', label: 'Proveedor ID', tipo: 'numero', requerido: false }
+            ]
+        });
 
         let paginaActual = 0;
         const registrosPorPagina = 10;
@@ -91,7 +143,10 @@
                 else if (operador === 'ilike') query = query.ilike(columna, `%${valor}%`);
             }
 
-            const { data, error, count } = await query.range(desde, hasta);
+            const { data, error, count } = await query
+                .order('id_producto', { ascending: true })
+                .range(desde, hasta);
+
             if (error) { console.error(error); return; }
             renderizarTabla(data, count, desde, hasta);
         }
@@ -107,18 +162,23 @@
             const tbody = document.getElementById('tablaCuerpo');
             tbody.innerHTML = '';
             if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: #f59e0b;">No se encontraron productos.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 30px; color: #f59e0b;">No se encontraron productos.</td></tr>`;
                 document.getElementById('infoPaginacion').textContent = 'Mostrando 0 de 0';
                 document.getElementById('btnAnterior').disabled = true; document.getElementById('btnSiguiente').disabled = true;
                 return;
             }
             data.forEach(item => {
+                const id = item.id_producto;
                 tbody.innerHTML += `<tr>
-                    <td><span class="badge-id">#PRD-${item.id_producto ?? '00'}</span></td>
+                    <td><span class="badge-id">#PRD-${id ?? '00'}</span></td>
                     <td><strong>${item.nombre_producto ?? 'N/A'}</strong></td>
                     <td>${item.categoria ?? 'N/A'}</td>
                     <td><span class="badge-precio">$${Number(item.precio_unitario || 0).toFixed(2)}</span></td>
                     <td>Prov. #${item.id_proveedor ?? 'N/A'}</td>
+                    <td style="text-align: center;">
+                        <button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick='abrirModalCRUD(${JSON.stringify(item)})'>✏️ Editar</button>
+                        <button class="btn-primary" style="padding: 5px 10px; font-size: 11px; background: #ef4444; box-shadow: none;" onclick="eliminarRegistroCRUD(_supabase, ${id}, () => cargarDatos(0))">🗑️ Borrar</button>
+                    </td>
                 </tr>`;
             });
             const hastaMostrado = Math.min(hasta + 1, totalRegistros);

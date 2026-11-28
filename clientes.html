@@ -126,7 +126,7 @@
     </div>
 <script>
         const SUPABASE_URL = 'https://sppydfpfikqvxaviwfem.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwcHlkZnBmaWtxdnhhdml3ZmVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5MTg0NTcsImV4cCI6MjEwOTQ5NDQ1N30.g17KVS9WLU4uew9uhEh0HqP5Ul-ZwTrgljYXHbBysrA ';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwcHlkZnBmaWtxdnhhdml3ZmVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5MTg0NTcsImV4cCI6MjEwOTQ5NDQ1N30.g17KVS9WLU4uew9uhEh0HqP5Ul-ZwTrgljYXHbBysrA';
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -141,7 +141,7 @@
         const registrosPorPagina = 10;
         let modoFiltrado = false;
 
-       async function cargarDatos(resetPagina = false) {
+        async function cargarDatos(resetPagina = false) {
             if (resetPagina) paginaActual = 0;
             const desde = paginaActual * registrosPorPagina;
             const hasta = desde + registrosPorPagina - 1;
@@ -153,26 +153,26 @@
                     let columna = document.getElementById('campoColumna').value;
                     const operador = document.getElementById('campoOperador').value.toLowerCase();
                     const valor = document.getElementById('valorBusqueda').value.trim();
-                    
-                    // Mapeo inteligente de columnas para asegurar el esquema 'dw'
+
                     if (columna === 'nombre' || columna === 'nombre_cliente' || columna.includes('nombre')) columna = 'nombre_cliente';
                     if (columna === 'correo' || columna === 'email' || columna.includes('correo')) columna = 'email';
                     if (columna === 'id' || columna === 'id_cliente' || columna.includes('id')) columna = 'id_cliente';
 
                     if (valor !== '') {
-                        // Si es ID o usa operador de igualdad estricta
                         if (operador === 'eq' || operador === '=' || columna === 'id_cliente') {
                             query = query.eq(columna, Number(valor) || valor);
                         } else {
-                            // CUALQUIER otro operador de texto (ilike, like, contiene, etc.) usará búsqueda parcial
                             query = query.ilike(columna, `%${valor}%`);
                         }
                     }
                 }
 
-                const { data, error, count } = await query.range(desde, hasta);
+                const { data, error, count } = await query
+                    .order('id_cliente', { ascending: true })
+                    .range(desde, hasta);
+
                 if (error) { console.error('Error al consultar:', error); return; }
-                
+
                 renderizarTabla(data, count, desde, hasta);
             } catch (err) { console.error('Excepción en carga:', err); }
         }
@@ -180,17 +180,16 @@
         function aplicarFiltro() {
             const valor = document.getElementById('valorBusqueda').value.trim();
             if (valor === '') { alert('Ingresa un valor para buscar'); return; }
-            modoFiltrado = true; 
-            cargarDatos(true); // Reinicia a la página 0 al filtrar
+            modoFiltrado = true;
+            cargarDatos(true);
         }
 
-        function resetearTodo() { 
-            document.getElementById('valorBusqueda').value = ''; 
-            modoFiltrado = false; 
-            cargarDatos(true); 
+        function resetearTodo() {
+            document.getElementById('valorBusqueda').value = '';
+            modoFiltrado = false;
+            cargarDatos(true);
         }
 
-        // Control para Siguiente (+1) y Anterior (-1)
         function cambiarPagina(direccion) {
             paginaActual += direccion;
             if (paginaActual < 0) paginaActual = 0;
@@ -200,11 +199,11 @@
         function renderizarTabla(data, totalRegistros, desde, hasta) {
             const tbody = document.getElementById('tablaCuerpo');
             tbody.innerHTML = '';
-            
+
             if (!data || data.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: #f59e0b;">No se encontraron registros.</td></tr>`;
                 document.getElementById('infoPaginacion').textContent = 'Mostrando 0 de 0';
-                document.getElementById('btnAnterior').disabled = true; 
+                document.getElementById('btnAnterior').disabled = true;
                 document.getElementById('btnSiguiente').disabled = true;
                 return;
             }
@@ -238,5 +237,3 @@
         // Carga inicial al abrir la página
         cargarDatos(true);
     </script>
-</body>
-</html>

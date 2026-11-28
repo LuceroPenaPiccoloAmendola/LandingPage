@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración - SuperMarket</title>
+    <link rel="stylesheet" href="estilosVistas.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth-guard.js"></script>
+</head>
+<body>
+    <div class="layout-app">
+        <aside class="sidebar-navegacion">
+            <div>
+                <div class="brand-header">
+                    <div class="brand-logo">SM</div>
+                    <span class="brand-title">SuperMarket</span>
+                </div>
+                <ul class="nav-lista">
+                    <li class="nav-item"><a href="menu.html">📊 Analytics & Tendencias</a></li>
+                    <li class="nav-item"><a href="ventas.html">💰 Ventas</a></li>
+                    <li class="nav-item"><a href="productos.html">🏷️ Productos</a></li>
+                    <li class="nav-item"><a href="inventario.html">📦 Inventario</a></li>
+                    <li class="nav-item"><a href="clientes.html">👥 Clientes</a></li>
+                    <li class="nav-item"><a href="sucursales.html">🏢 Sucursales</a></li>
+                    <li class="nav-item active" id="navAdminItem"><a href="admin.html">🛡️ Administración</a></li>
+                </ul>
+            </div>
+            <div style="font-size: 11px; color: #475569; text-align: center;">
+                <a href="#" onclick="cerrarSesionSeguro()" style="color: #94a3b8; text-decoration: none;">← Cerrar Sesión</a>
+            </div>
+        </aside>
+
+        <main class="contenido-app">
+            <div class="top-bar">
+                <div class="page-title">
+                    <h1>Panel de Administración y Roles</h1>
+                    <p>Control de acceso y permisos sobre el esquema <code>dw</code></p>
+                </div>
+            </div>
+
+            <div class="toolbar-filtros">
+                <form id="formAsignarRol" class="filtros-grupo" style="flex-wrap:wrap; width:100%;">
+                    <input type="text" id="adminUserId" class="input-text" placeholder="UUID del usuario (Auth)" required />
+                    <input type="email" id="adminCorreo" class="input-text" placeholder="Correo del usuario" required />
+                    <select id="adminRol" class="input-select">
+                        <option value="empleado">empleado</option>
+                        <option value="admin">admin</option>
+                    </select>
+                    <select id="adminActivo" class="input-select">
+                        <option value="true">Activo</option>
+                        <option value="false">Inactivo</option>
+                    </select>
+                    <button type="submit" class="btn-primary">💾 Guardar Rol</button>
+                </form>
+            </div>
+
+            <div class="tabla-card">
+                <table class="tabla-custom">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Correo</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaRolesCuerpo"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const usuario = await protegerVista({ requiereAdmin: true });
+            if (!usuario) return;
+            cargarUsuariosRol();
+        });
+
+        async function cargarUsuariosRol() {
+            const { data, error } = await _authSupabase
+                .schema('dw')
+                .from('usuarios_rol')
+                .select('user_id, correo, rol, activo')
+                .order('correo', { ascending: true });
+
+            const tbody = document.getElementById('tablaRolesCuerpo');
+            tbody.innerHTML = '';
+
+            if (error || !data) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:#f87171;">No se pudieron cargar los roles.</td></tr>`;
+                return;
+            }
+
+            data.forEach(u => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="badge-id">${u.user_id}</span></td>
+                        <td><span class="badge-email">${u.correo}</span></td>
+                        <td><strong>${u.rol}</strong></td>
+                        <td>${u.activo ? 'Activo' : 'Inactivo'}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('formAsignarRol').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                user_id: document.getElementById('adminUserId').value.trim(),
+                correo: document.getElementById('adminCorreo').value.trim(),
+                rol: document.getElementById('adminRol').value,
+                activo: document.getElementById('adminActivo').value === 'true'
+            };
+
+            const { error } = await _authSupabase
+                .schema('dw')
+                .from('usuarios_rol')
+                .upsert([payload], { onConflict: 'user_id' });
+
+            if (error) {
+                alert('Error al guardar el rol: ' + error.message);
+                return;
+            }
+
+            alert('Rol guardado correctamente.');
+            e.target.reset();
+            cargarUsuariosRol();
+        });
+    </script>
+</body>
+</html>

@@ -1,72 +1,136 @@
-// --- MOTOR GENERAL CRUD PARA SUPABASE ---
+// --- MOTOR GENERAL CRUD PARA SUPABASE (MULTI-MÓDULO) ---
 
 let moduloActualConfig = {};
 
-// 1. Configurar el módulo activo (tabla, llave primaria y nombre descriptivo)
+// 1. Configurar el módulo activo (tabla, llave primaria, nombre descriptivo y campos)
+// Ejemplo con campos dinámicos:
+// configurarCRUD({
+//     tabla: 'dim_producto',
+//     idField: 'id_producto',
+//     nombreModulo: 'Producto',
+//     campos: [
+//         { inputId: 'formNombre', columna: 'nombre_producto', label: 'Nombre', tipo: 'texto', requerido: true },
+//         { inputId: 'formPrecio', columna: 'precio', label: 'Precio', tipo: 'numero', requerido: false }
+//     ]
+// });
 function configurarCRUD(config) {
-    // config ejemplo: { tabla: 'dim_cliente', idField: 'id_cliente', nombreModulo: 'Cliente' }
-    moduloActualConfig = config;
+    moduloActualConfig = {
+        campos: null,
+        ...config
+    };
+}
+
+function obtenerCamposEfectivos() {
+    if (Array.isArray(moduloActualConfig.campos) && moduloActualConfig.campos.length > 0) {
+        return moduloActualConfig.campos;
+    }
+    // Compatibilidad por defecto para clientes / dim_cliente
+    return [
+        { inputId: 'formNombre', columna: 'nombre_cliente', alias: ['nombre'], label: 'Nombre', tipo: 'texto', requerido: true },
+        { inputId: 'formCorreo', columna: 'email', alias: ['correo'], label: 'Correo', tipo: 'texto', requerido: false },
+        { inputId: 'formTelefono', columna: 'telefono', label: 'Teléfono', tipo: 'numero', requerido: false }
+    ];
+}
+
+function obtenerValorDeItem(item, campo) {
+    if (!item) return '';
+    if (item[campo.columna] !== undefined && item[campo.columna] !== null) {
+        return item[campo.columna];
+    }
+    if (Array.isArray(campo.alias)) {
+        for (const key of campo.alias) {
+            if (item[key] !== undefined && item[key] !== null) {
+                return item[key];
+            }
+        }
+    }
+    return '';
 }
 
 // 2. Abrir Modal para Crear o Editar
 function abrirModalCRUD(item = null) {
     const modal = document.getElementById('modalForm');
     const titulo = document.getElementById('modalTitulo');
-    
-    // Limpiar o rellenar el ID oculto
-    document.getElementById('formId').value = item ? item[moduloActualConfig.idField] : '';
-    
+    const idInput = document.getElementById('formId');
+
+    if (!modal || !titulo) return;
+
+    if (idInput) {
+        idInput.value = item ? item[moduloActualConfig.idField] : '';
+    }
+
     if (item) {
         titulo.innerText = `Editar ${moduloActualConfig.nombreModulo} #${item[moduloActualConfig.idField]}`;
-        // Rellenar campos apuntando a los nombres exactos de tus columnas
-        if(document.getElementById('formNombre')) document.getElementById('formNombre').value = item.nombre_cliente || item.nombre || '';
-        if(document.getElementById('formCorreo')) document.getElementById('formCorreo').value = item.email || item.correo || '';
-        if(document.getElementById('formTelefono')) document.getElementById('formTelefono').value = item.telefono || '';
     } else {
         titulo.innerText = `Registrar Nuevo ${moduloActualConfig.nombreModulo}`;
-        if(document.getElementById('formNombre')) document.getElementById('formNombre').value = '';
-        if(document.getElementById('formCorreo')) document.getElementById('formCorreo').value = '';
-        if(document.getElementById('formTelefono')) document.getElementById('formTelefono').value = '';
     }
-    
+
+    const campos = obtenerCamposEfectivos();
+    campos.forEach(campo => {
+        const el = document.getElementById(campo.inputId);
+        if (!el) return;
+        el.value = item ? obtenerValorDeItem(item, campo) : '';
+    });
+
     modal.style.display = 'flex';
 }
 
 function cerrarModalCRUD() {
-    document.getElementById('modalForm').style.display = 'none';
+    const modal = document.getElementById('modalForm');
+    if (modal) modal.style.display = 'none';
 }
 
 // 3. Función general para Guardar (Insert o Update) en Supabase
 async function guardarRegistroCRUD(_supabase, callbackRecargar) {
-    const id = document.getElementById('formId').value;
-    const nombre = document.getElementById('formNombre') ? document.getElementById('formNombre').value.trim() : null;
-    const correo = document.getElementById('formCorreo') ? document.getElementById('formCorreo').value.trim() : null;
-    const telefonoInput = document.getElementById('formTelefono') ? document.getElementById('formTelefono').value.trim() : null;
+    const id = document.getElementById('formId') ? document.getElementById('formId').value.trim() : '';
+    const campos = obtenerCamposEfectivos();
+    const datosAEnviar = {};
 
-    if (!nombre) {
-        alert('El nombre es obligatorio.');
-        return;
+    for (const campo of campos) {
+        const el = document.getElementById(campo.inputId);
+        if (!el) continue;
+
+        const rawVal = el.value.trim();
+        const etiqueta = campo.label || campo.columna;
+
+        if (campo.requerido && rawVal === '') {
+            alert(`El campo "${etiqueta}" es obligatorio.`);
+            el.focus();
+            return;
+        }
+
+        if (campo.tipo === 'numero') {
+            if (rawVal === '') {
+                datosAEnviar[campo.columna] = null;
+            } else {
+                const num = Number(rawVal);
+                if (Number.isNaN(num)) {
+                    alert(`El campo "${etiqueta}" debe ser un número válido.`);
+                    el.focus();
+                    return;
+                }
+                datosAEnviar[campo.columna] = num;
+            }
+        } else if (campo.tipo === 'booleano') {
+            if (rawVal === '') {
+                datosAEnviar[campo.columna] = null;
+            } else {
+                datosAEnviar[campo.columna] = rawVal === 'true' || rawVal === '1';
+            }
+        } else {
+            datosAEnviar[campo.columna] = rawVal === '' ? null : rawVal;
+        }
     }
 
     let resultado = null;
 
     try {
-        let telefonoFinal = telefonoInput ? Number(telefonoInput) : null;
-
-        let datosAEnviar = {
-            nombre_cliente: nombre,
-            email: correo,
-            telefono: telefonoFinal
-        };
-
         if (id === '') {
-            // INSERT explícito asegurando la llamada al esquema dw
             resultado = await _supabase
                 .schema('dw')
                 .from(moduloActualConfig.tabla)
                 .insert([datosAEnviar]);
         } else {
-            // UPDATE explícito asegurando la llamada al esquema dw
             resultado = await _supabase
                 .schema('dw')
                 .from(moduloActualConfig.tabla)
@@ -87,7 +151,7 @@ async function guardarRegistroCRUD(_supabase, callbackRecargar) {
 
         alert(id === '' ? '¡Registro creado exitosamente!' : '¡Registro actualizado exitosamente!');
         cerrarModalCRUD();
-        if (typeof callbackRecargar === 'function') callbackRecargar(0);
+        if (typeof callbackRecargar === 'function') callbackRecargar(true);
 
     } catch (err) {
         console.error('Error general al procesar la operación:', err);
@@ -109,7 +173,7 @@ async function eliminarRegistroCRUD(_supabase, id, callbackRecargar) {
         if (error) throw error;
 
         alert('Registro eliminado correctamente.');
-        if (typeof callbackRecargar === 'function') callbackRecargar(0);
+        if (typeof callbackRecargar === 'function') callbackRecargar(true);
 
     } catch (err) {
         console.error('Error al eliminar:', err);
